@@ -1,0 +1,310 @@
+{
+  "info": {
+    "name": "NestJS Blog API",
+    "description": "Collection of API requests for the NestJS Blog project",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"joao@example.com\",\n  \"name\": \"João Silva\",\n  \"bio\": \"Desenvolvedor apaixonado por tecnologia\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/users/{{userId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"João Silva Updated\",\n  \"bio\": \"Senior Developer\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/users/{{userId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["users", "{{userId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Create Category - Web Development",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Web Development\",\n  \"slug\": \"web-development\",\n  \"description\": \"Articles about web development\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/categories",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Category - Node.js",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Node.js\",\n  \"slug\": \"nodejs\",\n  \"description\": \"Node.js related content\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/categories",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["categories"]
+            }
+          }
+        },
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/categories",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["categories"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "item": [
+        {
+          "name": "Create Post with Categories",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Introdução ao NestJS\",\n  \"slug\": \"introducao-ao-nestjs\",\n  \"content\": \"NestJS é um framework progressivo para construir aplicações Node.js eficientes e escaláveis. Ele usa TypeScript por padrão e combina elementos de OOP, FP e FRP.\",\n  \"excerpt\": \"Aprenda os conceitos básicos do NestJS\",\n  \"published\": true,\n  \"authorId\": \"{{userId}}\",\n  \"categoryIds\": [\"{{categoryId1}}\", \"{{categoryId2}}\"]\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/posts",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts"]
+            }
+          }
+        },
+        {
+          "name": "Get All Posts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/posts",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts"]
+            }
+          }
+        },
+        {
+          "name": "Get Published Posts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/posts/published",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts", "published"]
+            }
+          }
+        },
+        {
+          "name": "Get Post by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/posts/{{postId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts", "{{postId}}"]
+            }
+          }
+        },
+        {
+          "name": "Increment View Count",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "http://localhost:3000/posts/{{postId}}/view",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["posts", "{{postId}}", "view"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Excelente artigo! Muito didático e bem explicado.\",\n  \"postId\": \"{{postId}}\",\n  \"authorId\": \"{{userId}}\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/comments",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["comments"]
+            }
+          }
+        },
+        {
+          "name": "Get All Comments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/comments",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["comments"]
+            }
+          }
+        },
+        {
+          "name": "Get Approved Comments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/comments/approved",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["comments", "approved"]
+            }
+          }
+        },
+        {
+          "name": "Get Comments by Post",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/comments/post/{{postId}}",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["comments", "post", "{{postId}}"]
+            }
+          }
+        },
+        {
+          "name": "Approve Comment",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "http://localhost:3000/comments/{{commentId}}/approve",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "3000",
+              "path": ["comments", "{{commentId}}", "approve"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
