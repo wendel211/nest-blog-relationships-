@@ -29,6 +29,9 @@ export class User {
   @Column({ length: 50 })
   name: string;
 
+  @Column({ select: false })
+  password: string;
+
   @Column({ type: 'text', nullable: true })
   bio: string;
 
