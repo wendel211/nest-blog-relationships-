@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Category } from './category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 @Injectable()
 export class CategoriesService {
@@ -26,11 +28,30 @@ export class CategoriesService {
     return this.categoriesRepository.save(category);
   }
 
-  async findAll(): Promise<Category[]> {
-    return this.categoriesRepository.find({
+  async findAll(paginationDto: PaginationDto): Promise<PaginatedResponse<Category>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.categoriesRepository.findAndCount({
       relations: ['posts'],
       order: { name: 'ASC' },
+      skip,
+      take: limit,
     });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async findOne(id: string): Promise<Category> {

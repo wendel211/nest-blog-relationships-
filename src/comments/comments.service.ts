@@ -10,6 +10,8 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { UsersService } from '../users/users.service';
 import { PostsService } from '../posts/posts.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 /**
  * CommentsService
@@ -59,42 +61,102 @@ export class CommentsService {
 
   /**
    * Find all comments
+   * Supports pagination
    */
-  async findAll(): Promise<Comment[]> {
-    return this.commentsRepository
+  async findAll(paginationDto: PaginationDto): Promise<PaginatedResponse<Comment>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.commentsRepository
       .createQueryBuilder('comment')
       .leftJoinAndSelect('comment.author', 'author')
       .leftJoinAndSelect('comment.post', 'post')
       .orderBy('comment.createdAt', 'DESC')
-      .getMany();
+      .skip(skip)
+      .take(limit);
+
+    const [data, total] = await queryBuilder.getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /**
    * Find approved comments only
    * Business Rule: Only show approved comments publicly
+   * Supports pagination
    */
-  async findApproved(): Promise<Comment[]> {
-    return this.commentsRepository
+  async findApproved(paginationDto: PaginationDto): Promise<PaginatedResponse<Comment>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.commentsRepository
       .createQueryBuilder('comment')
       .leftJoinAndSelect('comment.author', 'author')
       .leftJoinAndSelect('comment.post', 'post')
       .where('comment.isApproved = :isApproved', { isApproved: true })
       .andWhere('author.isActive = :isActive', { isActive: true })
       .orderBy('comment.createdAt', 'DESC')
-      .getMany();
+      .skip(skip)
+      .take(limit);
+
+    const [data, total] = await queryBuilder.getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /**
    * Find comments by post
+   * Supports pagination
    */
-  async findByPost(postId: string): Promise<Comment[]> {
-    return this.commentsRepository
+  async findByPost(postId: string, paginationDto: PaginationDto): Promise<PaginatedResponse<Comment>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.commentsRepository
       .createQueryBuilder('comment')
       .leftJoinAndSelect('comment.author', 'author')
       .where('comment.postId = :postId', { postId })
       .andWhere('comment.isApproved = :isApproved', { isApproved: true })
       .orderBy('comment.createdAt', 'ASC')
-      .getMany();
+      .skip(skip)
+      .take(limit);
+
+    const [data, total] = await queryBuilder.getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /**

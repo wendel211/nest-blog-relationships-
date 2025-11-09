@@ -9,10 +9,12 @@ import {
   HttpCode,
   HttpStatus,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @Controller('comments')
 export class CommentsController {
@@ -25,18 +27,18 @@ export class CommentsController {
   }
 
   @Get()
-  findAll() {
-    return this.commentsService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.commentsService.findAll(paginationDto);
   }
 
   @Get('approved')
-  findApproved() {
-    return this.commentsService.findApproved();
+  findApproved(@Query() paginationDto: PaginationDto) {
+    return this.commentsService.findApproved(paginationDto);
   }
 
   @Get('post/:postId')
-  findByPost(@Param('postId') postId: string) {
-    return this.commentsService.findByPost(postId);
+  findByPost(@Param('postId') postId: string, @Query() paginationDto: PaginationDto) {
+    return this.commentsService.findByPost(postId, paginationDto);
   }
 
   @Get(':id')
