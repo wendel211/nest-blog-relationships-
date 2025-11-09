@@ -11,6 +11,8 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { UsersService } from '../users/users.service';
 import { CategoriesService } from '../categories/categories.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 /**
  * PostsService
@@ -75,30 +77,70 @@ export class PostsService {
   /**
    * Find all posts with joins
    * Demonstrates using query builder for complex queries with multiple joins
+   * Supports pagination
    */
-  async findAll(): Promise<Post[]> {
-    return this.postsRepository
+  async findAll(paginationDto: PaginationDto): Promise<PaginatedResponse<Post>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.postsRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .leftJoinAndSelect('post.categories', 'category')
       .leftJoinAndSelect('post.comments', 'comment')
       .orderBy('post.createdAt', 'DESC')
-      .getMany();
+      .skip(skip)
+      .take(limit);
+
+    const [data, total] = await queryBuilder.getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /**
    * Find published posts only
    * Business Rule: Only show published posts to public
+   * Supports pagination
    */
-  async findPublished(): Promise<Post[]> {
-    return this.postsRepository
+  async findPublished(paginationDto: PaginationDto): Promise<PaginatedResponse<Post>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.postsRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .leftJoinAndSelect('post.categories', 'category')
       .where('post.published = :published', { published: true })
       .andWhere('author.isActive = :isActive', { isActive: true })
       .orderBy('post.publishedAt', 'DESC')
-      .getMany();
+      .skip(skip)
+      .take(limit);
+
+    const [data, total] = await queryBuilder.getManyAndCount();
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /**
