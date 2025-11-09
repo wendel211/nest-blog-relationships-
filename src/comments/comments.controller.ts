@@ -10,19 +10,24 @@ import {
   HttpStatus,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { PaginationDto } from '../common/dto/pagination.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../users/user.entity';
 
 @Controller('comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createCommentDto: CreateCommentDto) {
+  create(@Body() createCommentDto: CreateCommentDto, @CurrentUser() user: User) {
     return this.commentsService.create(createCommentDto);
   }
 
@@ -52,13 +57,15 @@ export class CommentsController {
   }
 
   @Put(':id/approve')
-  approve(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  approve(@Param('id') id: string, @CurrentUser() user: User) {
     return this.commentsService.approve(id);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string, @CurrentUser() user: User) {
     return this.commentsService.remove(id);
   }
 }

@@ -18,6 +18,7 @@ Projeto completo em NestJS demonstrando relacionamentos TypeORM (1:N e N:N), DTO
 
 Este projeto implementa um sistema de blog completo com:
 
+- **Autenticação JWT**: Sistema completo de autenticação com registro, login e proteção de rotas
 - **Usuários**: Gerenciamento de autores do blog
 - **Posts**: Artigos com suporte a categorias
 - **Comentários**: Sistema de comentários com aprovação
@@ -29,6 +30,19 @@ O projeto segue a arquitetura modular do NestJS com separação clara de respons
 
 ```
 src/
+├── auth/                # Módulo de autenticação (JWT)
+│   ├── auth.service.ts
+│   ├── auth.controller.ts
+│   ├── auth.module.ts
+│   ├── strategies/
+│   │   └── jwt.strategy.ts
+│   ├── guards/
+│   │   └── jwt-auth.guard.ts
+│   ├── decorators/
+│   │   └── current-user.decorator.ts
+│   └── dto/
+│       ├── login.dto.ts
+│       └── register.dto.ts
 ├── users/              # Módulo de usuários
 │   ├── user.entity.ts
 │   ├── users.service.ts
@@ -67,6 +81,7 @@ export class User {
   id: string;              // UUID
   email: string;           // Único
   name: string;
+  password: string;        // Hash bcrypt (select: false)
   bio: string;
   isActive: boolean;
   createdAt: Date;
@@ -172,7 +187,7 @@ export class Category {
 ```bash
 # Clone o repositório
 git clone <repository-url>
-cd nest-blog-relationships-
+cd nest-blog-relationships
 
 # Instale as dependências
 npm install
@@ -197,6 +212,10 @@ DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
 DB_DATABASE=blog_db
+
+# JWT Configuration
+JWT_SECRET=your-very-secure-secret-key-change-this-in-production
+JWT_EXPIRES_IN=1d
 ```
 
 ### Opção 2: PostgreSQL com Docker
@@ -253,6 +272,14 @@ curl "http://localhost:3000/users?page=1&limit=20"
 }
 ```
 
+### 🔐 Autenticação
+
+- `POST /auth/register` - Registrar novo usuário
+- `POST /auth/login` - Login (retorna JWT token)
+- `GET /auth/profile` - Obter perfil do usuário autenticado 🔒
+
+> 🔒 = Requer autenticação JWT (Bearer token)
+
 ### Usuários
 
 - `POST /users` - Criar usuário
@@ -263,24 +290,24 @@ curl "http://localhost:3000/users?page=1&limit=20"
 
 ### Posts
 
-- `POST /posts` - Criar post
+- `POST /posts` - Criar post 🔒
 - `GET /posts?page=1&limit=10` - Listar todos os posts (paginado)
 - `GET /posts/published?page=1&limit=10` - Listar posts publicados (paginado)
 - `GET /posts/:id` - Buscar post por ID
-- `PATCH /posts/:id` - Atualizar post
+- `PATCH /posts/:id` - Atualizar post 🔒
 - `PUT /posts/:id/view` - Incrementar visualizações
-- `DELETE /posts/:id` - Deletar post
+- `DELETE /posts/:id` - Deletar post 🔒
 
 ### Comentários
 
-- `POST /comments` - Criar comentário
+- `POST /comments` - Criar comentário 🔒
 - `GET /comments?page=1&limit=10` - Listar todos os comentários (paginado)
 - `GET /comments/approved?page=1&limit=10` - Listar comentários aprovados (paginado)
 - `GET /comments/post/:postId?page=1&limit=10` - Buscar comentários de um post (paginado)
 - `GET /comments/:id` - Buscar comentário por ID
 - `PATCH /comments/:id` - Atualizar comentário
-- `PUT /comments/:id/approve` - Aprovar comentário
-- `DELETE /comments/:id` - Deletar comentário
+- `PUT /comments/:id/approve` - Aprovar comentário 🔒
+- `DELETE /comments/:id` - Deletar comentário 🔒
 
 ### Categorias
 
@@ -292,7 +319,85 @@ curl "http://localhost:3000/users?page=1&limit=20"
 
 ## 💡 Exemplos de Uso
 
-### 1. Criar um Usuário
+### 🔐 Autenticação
+
+#### 1. Registrar um Novo Usuário
+
+```bash
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "joao@example.com",
+    "password": "senha123",
+    "name": "João Silva",
+    "bio": "Desenvolvedor apaixonado por tecnologia"
+  }'
+```
+
+**Resposta:**
+```json
+{
+  "user": {
+    "id": "uuid-do-usuario",
+    "email": "joao@example.com",
+    "name": "João Silva",
+    "bio": "Desenvolvedor apaixonado por tecnologia",
+    "isActive": true,
+    "createdAt": "2024-01-01T10:00:00.000Z",
+    "updatedAt": "2024-01-01T10:00:00.000Z"
+  },
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+#### 2. Fazer Login
+
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "joao@example.com",
+    "password": "senha123"
+  }'
+```
+
+**Resposta:**
+```json
+{
+  "user": {
+    "id": "uuid-do-usuario",
+    "email": "joao@example.com",
+    "name": "João Silva",
+    "bio": "Desenvolvedor apaixonado por tecnologia",
+    "isActive": true
+  },
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+#### 3. Acessar Perfil do Usuário (Rota Protegida)
+
+```bash
+curl -X GET http://localhost:3000/auth/profile \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Resposta:**
+```json
+{
+  "user": {
+    "id": "uuid-do-usuario",
+    "email": "joao@example.com",
+    "name": "João Silva",
+    "bio": "Desenvolvedor apaixonado por tecnologia",
+    "isActive": true
+  }
+}
+```
+
+### 📝 CRUD Operations
+
+#### 4. Criar um Usuário (Método Alternativo)
 
 ```bash
 curl -X POST http://localhost:3000/users \
@@ -319,7 +424,7 @@ curl -X POST http://localhost:3000/users \
 }
 ```
 
-### 2. Listar Usuários com Paginação
+#### 5. Listar Usuários com Paginação
 
 ```bash
 # Listar primeira página com 10 usuários
@@ -352,7 +457,7 @@ curl "http://localhost:3000/users?page=2&limit=20"
 }
 ```
 
-### 3. Criar Categorias
+#### 6. Criar Categorias
 
 ```bash
 curl -X POST http://localhost:3000/categories \
@@ -372,11 +477,15 @@ curl -X POST http://localhost:3000/categories \
   }'
 ```
 
-### 4. Criar um Post com Categorias (DTO Aninhado)
+#### 7. Criar um Post com Categorias (DTO Aninhado + Autenticação)
 
 ```bash
+# Salve o token JWT em uma variável
+TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
 curl -X POST http://localhost:3000/posts \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "title": "Introdução ao NestJS",
     "slug": "introducao-ao-nestjs",
@@ -388,7 +497,7 @@ curl -X POST http://localhost:3000/posts \
   }'
 ```
 
-### 5. Listar Posts Publicados com Paginação
+#### 8. Listar Posts Publicados com Paginação
 
 ```bash
 # Buscar primeira página de posts publicados
@@ -421,11 +530,12 @@ curl "http://localhost:3000/posts/published?page=1&limit=5"
 }
 ```
 
-### 6. Criar um Comentário
+#### 9. Criar um Comentário (Requer Autenticação)
 
 ```bash
 curl -X POST http://localhost:3000/comments \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{
     "content": "Excelente artigo! Muito didático.",
     "postId": "uuid-do-post",
@@ -433,13 +543,14 @@ curl -X POST http://localhost:3000/comments \
   }'
 ```
 
-### 7. Aprovar um Comentário
+#### 10. Aprovar um Comentário (Requer Autenticação)
 
 ```bash
-curl -X PUT http://localhost:3000/comments/{comment-id}/approve
+curl -X PUT http://localhost:3000/comments/{comment-id}/approve \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-### 8. Buscar Post com Todos os Relacionamentos (Join)
+#### 11. Buscar Post com Todos os Relacionamentos (Join)
 
 ```bash
 curl http://localhost:3000/posts/{post-id}
@@ -487,7 +598,157 @@ curl http://localhost:3000/posts/{post-id}
 
 ## 🎓 Conceitos Demonstrados
 
-### 1. Relacionamentos TypeORM
+### 1. Autenticação JWT (JSON Web Tokens)
+
+#### Configuração do JWT Module
+
+```typescript
+JwtModule.register({
+  secret: process.env.JWT_SECRET || 'your-secret-key-change-this',
+  signOptions: {
+    expiresIn: '1d', // Token expira em 1 dia
+  },
+})
+```
+
+#### JWT Strategy com Passport
+
+```typescript
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+  ) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: process.env.JWT_SECRET || 'your-secret-key-change-this',
+    });
+  }
+
+  async validate(payload: JwtPayload): Promise<User> {
+    const user = await this.usersRepository.findOne({
+      where: { id: payload.sub, isActive: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found or inactive');
+    }
+
+    return user; // Anexado automaticamente ao request.user
+  }
+}
+```
+
+**Explicação:**
+- `ExtractJwt.fromAuthHeaderAsBearerToken()` - Extrai token do header Authorization
+- `validate()` - Método chamado automaticamente após validação do token
+- Retorna objeto do usuário que é anexado à requisição
+
+#### Hash de Senhas com bcrypt
+
+```typescript
+// Registrar usuário
+const salt = await bcrypt.genSalt(10);
+const hashedPassword = await bcrypt.hash(password, salt);
+
+// Login - validar senha
+const isPasswordValid = await bcrypt.compare(password, hashedPassword);
+```
+
+**Explicação:**
+- `genSalt(10)` - Gera salt com 10 rounds (balanceio entre segurança e performance)
+- `hash()` - Cria hash irreversível da senha
+- `compare()` - Compara senha em texto plano com hash
+
+#### Protegendo Rotas com Guards
+
+```typescript
+@Controller('posts')
+export class PostsController {
+  // Rota pública
+  @Get()
+  findAll() {
+    return this.postsService.findAll();
+  }
+
+  // Rota protegida - requer JWT
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  create(@Body() createPostDto: CreatePostDto, @CurrentUser() user: User) {
+    return this.postsService.create(createPostDto);
+  }
+}
+```
+
+**Explicação:**
+- `@UseGuards(JwtAuthGuard)` - Protege a rota com autenticação JWT
+- `@CurrentUser()` - Decorator customizado para obter usuário autenticado
+- Retorna 401 Unauthorized se token inválido ou ausente
+
+#### Custom Decorator para Usuário Atual
+
+```typescript
+export const CurrentUser = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext): User => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.user; // Injetado pelo JwtStrategy
+  },
+);
+```
+
+**Uso:**
+```typescript
+@Get('profile')
+@UseGuards(JwtAuthGuard)
+getProfile(@CurrentUser() user: User) {
+  return { user };
+}
+```
+
+#### Validação de DTOs com class-validator
+
+```typescript
+export class RegisterDto {
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @MinLength(6, { message: 'Password must be at least 6 characters long' })
+  @MaxLength(100, { message: 'Password must not exceed 100 characters' })
+  password: string;
+}
+```
+
+**Explicação:**
+- Validação automática antes de chegar ao controller
+- Mensagens de erro customizadas
+- ValidationPipe global ativa no main.ts
+
+#### Campo Password com select: false
+
+```typescript
+@Entity('users')
+export class User {
+  @Column({ select: false })
+  password: string; // Não retornado em queries por padrão
+}
+
+// Para obter password em query específica:
+const user = await this.usersRepository
+  .createQueryBuilder('user')
+  .addSelect('user.password') // Explicitamente incluir
+  .where('user.email = :email', { email })
+  .getOne();
+```
+
+**Explicação:**
+- `select: false` - Previne exposição acidental de senhas
+- Requer seleção explícita quando necessário (ex: login)
+
+### 2. Relacionamentos TypeORM
 
 #### Relacionamento 1:N (One-to-Many)
 
@@ -533,7 +794,7 @@ posts: Post[];
 - Apenas um lado deve ter `@JoinTable`
 - `cascade: true` - Permite salvar categorias junto com o post
 
-### 2. DTOs Aninhados
+### 3. DTOs Aninhados
 
 **CreatePostDto com categoryIds:**
 
@@ -569,7 +830,7 @@ async create(createPostDto: CreatePostDto): Promise<Post> {
 }
 ```
 
-### 3. Joins e Query Builder
+### 4. Joins e Query Builder
 
 **Buscar posts com todos os relacionamentos:**
 
@@ -598,7 +859,7 @@ async findPublished(): Promise<Post[]> {
 }
 ```
 
-### 4. Validações Avançadas
+### 5. Validações Avançadas
 
 **class-validator decorators:**
 
@@ -637,7 +898,7 @@ app.useGlobalPipes(
 );
 ```
 
-### 5. Regras de Negócio
+### 6. Regras de Negócio
 
 **Exemplo 1: Email único**
 ```typescript
@@ -686,7 +947,7 @@ async remove(id: string): Promise<void> {
 }
 ```
 
-### 6. Cascade Operations
+### 7. Cascade Operations
 
 **Save cascade:**
 ```typescript
@@ -708,6 +969,7 @@ CREATE TABLE users (
   id UUID PRIMARY KEY,
   email VARCHAR(100) UNIQUE,
   name VARCHAR(50),
+  password VARCHAR(255),
   bio TEXT,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP,
@@ -777,11 +1039,13 @@ CREATE TABLE post_categories (
 7. **Relacionamentos bem definidos**: Uso correto de @JoinColumn, @JoinTable, cascade, eager
 8. **Query optimization**: Uso de QueryBuilder para queries complexas
 9. **Soft delete**: Preservação de dados através de flag isActive
+10. **Autenticação segura**: JWT com bcrypt para hash de senhas
+11. **Paginação**: Implementada em todos os endpoints de listagem
 
 ## 🎯 Próximos Passos (Sugestões)
 
-- [ ] Implementar autenticação JWT
-- [x] Adicionar paginação nos endpoints de listagem
+- [x] Implementar autenticação JWT ✅
+- [x] Adicionar paginação nos endpoints de listagem ✅
 - [ ] Implementar migrations ao invés de synchronize
 - [ ] Adicionar testes unitários e E2E
 - [ ] Implementar cache com Redis
@@ -789,6 +1053,8 @@ CREATE TABLE post_categories (
 - [ ] Implementar busca full-text
 - [ ] Adicionar rate limiting
 - [ ] Documentação com Swagger/OpenAPI
+- [ ] Implementar refresh tokens
+- [ ] Adicionar roles e permissões (RBAC)
 
 ## 📄 Licença
 
