@@ -224,10 +224,39 @@ A aplicação estará rodando em `http://localhost:3000`
 
 ## 📡 Endpoints da API
 
+**Nota:** Todos os endpoints de listagem suportam paginação através dos parâmetros de query `page` e `limit`.
+
+### Parâmetros de Paginação
+
+Todos os endpoints de listagem (`GET`) aceitam os seguintes parâmetros opcionais:
+
+- `page` - Número da página (padrão: 1, mínimo: 1)
+- `limit` - Quantidade de itens por página (padrão: 10, mínimo: 1, máximo: 100)
+
+**Exemplo de uso:**
+```bash
+curl "http://localhost:3000/users?page=1&limit=20"
+```
+
+**Formato de resposta paginada:**
+```json
+{
+  "data": [...],
+  "meta": {
+    "total": 100,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 10,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  }
+}
+```
+
 ### Usuários
 
 - `POST /users` - Criar usuário
-- `GET /users` - Listar todos os usuários
+- `GET /users?page=1&limit=10` - Listar todos os usuários (paginado)
 - `GET /users/:id` - Buscar usuário por ID
 - `PATCH /users/:id` - Atualizar usuário
 - `DELETE /users/:id` - Deletar usuário (soft delete)
@@ -235,8 +264,8 @@ A aplicação estará rodando em `http://localhost:3000`
 ### Posts
 
 - `POST /posts` - Criar post
-- `GET /posts` - Listar todos os posts
-- `GET /posts/published` - Listar posts publicados
+- `GET /posts?page=1&limit=10` - Listar todos os posts (paginado)
+- `GET /posts/published?page=1&limit=10` - Listar posts publicados (paginado)
 - `GET /posts/:id` - Buscar post por ID
 - `PATCH /posts/:id` - Atualizar post
 - `PUT /posts/:id/view` - Incrementar visualizações
@@ -245,9 +274,9 @@ A aplicação estará rodando em `http://localhost:3000`
 ### Comentários
 
 - `POST /comments` - Criar comentário
-- `GET /comments` - Listar todos os comentários
-- `GET /comments/approved` - Listar comentários aprovados
-- `GET /comments/post/:postId` - Buscar comentários de um post
+- `GET /comments?page=1&limit=10` - Listar todos os comentários (paginado)
+- `GET /comments/approved?page=1&limit=10` - Listar comentários aprovados (paginado)
+- `GET /comments/post/:postId?page=1&limit=10` - Buscar comentários de um post (paginado)
 - `GET /comments/:id` - Buscar comentário por ID
 - `PATCH /comments/:id` - Atualizar comentário
 - `PUT /comments/:id/approve` - Aprovar comentário
@@ -256,7 +285,7 @@ A aplicação estará rodando em `http://localhost:3000`
 ### Categorias
 
 - `POST /categories` - Criar categoria
-- `GET /categories` - Listar todas as categorias
+- `GET /categories?page=1&limit=10` - Listar todas as categorias (paginado)
 - `GET /categories/:id` - Buscar categoria por ID
 - `PATCH /categories/:id` - Atualizar categoria
 - `DELETE /categories/:id` - Deletar categoria
@@ -290,7 +319,40 @@ curl -X POST http://localhost:3000/users \
 }
 ```
 
-### 2. Criar Categorias
+### 2. Listar Usuários com Paginação
+
+```bash
+# Listar primeira página com 10 usuários
+curl "http://localhost:3000/users?page=1&limit=10"
+
+# Listar segunda página com 20 usuários
+curl "http://localhost:3000/users?page=2&limit=20"
+```
+
+**Resposta (com paginação):**
+```json
+{
+  "data": [
+    {
+      "id": "uuid-1",
+      "email": "joao@example.com",
+      "name": "João Silva",
+      "posts": [],
+      "comments": []
+    }
+  ],
+  "meta": {
+    "total": 100,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 10,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  }
+}
+```
+
+### 3. Criar Categorias
 
 ```bash
 curl -X POST http://localhost:3000/categories \
@@ -310,7 +372,7 @@ curl -X POST http://localhost:3000/categories \
   }'
 ```
 
-### 3. Criar um Post com Categorias (DTO Aninhado)
+### 4. Criar um Post com Categorias (DTO Aninhado)
 
 ```bash
 curl -X POST http://localhost:3000/posts \
@@ -326,7 +388,40 @@ curl -X POST http://localhost:3000/posts \
   }'
 ```
 
-### 4. Criar um Comentário
+### 5. Listar Posts Publicados com Paginação
+
+```bash
+# Buscar primeira página de posts publicados
+curl "http://localhost:3000/posts/published?page=1&limit=5"
+```
+
+**Resposta:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid-do-post",
+      "title": "Introdução ao NestJS",
+      "published": true,
+      "author": {
+        "id": "uuid-autor",
+        "name": "João Silva"
+      },
+      "categories": [...]
+    }
+  ],
+  "meta": {
+    "total": 25,
+    "page": 1,
+    "limit": 5,
+    "totalPages": 5,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  }
+}
+```
+
+### 6. Criar um Comentário
 
 ```bash
 curl -X POST http://localhost:3000/comments \
@@ -338,13 +433,13 @@ curl -X POST http://localhost:3000/comments \
   }'
 ```
 
-### 5. Aprovar um Comentário
+### 7. Aprovar um Comentário
 
 ```bash
 curl -X PUT http://localhost:3000/comments/{comment-id}/approve
 ```
 
-### 6. Buscar Post com Todos os Relacionamentos (Join)
+### 8. Buscar Post com Todos os Relacionamentos (Join)
 
 ```bash
 curl http://localhost:3000/posts/{post-id}
@@ -686,7 +781,7 @@ CREATE TABLE post_categories (
 ## 🎯 Próximos Passos (Sugestões)
 
 - [ ] Implementar autenticação JWT
-- [ ] Adicionar paginação nos endpoints de listagem
+- [x] Adicionar paginação nos endpoints de listagem
 - [ ] Implementar migrations ao invés de synchronize
 - [ ] Adicionar testes unitários e E2E
 - [ ] Implementar cache com Redis

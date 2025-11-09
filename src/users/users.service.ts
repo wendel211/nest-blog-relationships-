@@ -8,6 +8,8 @@ import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
+import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 
 /**
  * UsersService
@@ -43,12 +45,32 @@ export class UsersService {
 
   /**
    * Find all users with their posts count
+   * Supports pagination
    */
-  async findAll(): Promise<User[]> {
-    return this.usersRepository.find({
+  async findAll(paginationDto: PaginationDto): Promise<PaginatedResponse<User>> {
+    const { page = 1, limit = 10 } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.usersRepository.findAndCount({
       relations: ['posts', 'comments'],
       order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
     });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   /**
